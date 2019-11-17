@@ -39,9 +39,26 @@ public class Chunk : MonoBehaviour
 
     private void Update()
     {
-        //noiseScale = (Mathf.Sin(Time.time * speed) - offset) * scale;
 
-        GenerateVoxelMap();
+        Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        if (Input.GetButton("Fire1"))
+        {
+            
+            for (int x = 0; x < chunkSize.x; x++)
+            {
+                for (int y = 0; y < chunkSize.y; y++)
+                {
+                    float dist = Vector2.Distance(new Vector2(x, y), mousePos);
+                    if (dist <= 5 && voxelMap[x, y] < 2 - dist)
+                    {
+                        voxelMap[x, y] = 2 - dist;
+                        // make brush smoother
+                    }
+                }
+            }
+        }
+
+        //GenerateVoxelMap();
         ClearMesh();
         MarchSquares();
         CreateMesh();
@@ -79,6 +96,8 @@ public class Chunk : MonoBehaviour
         {
             for (int vert = 0; vert < 3; vert++)
             {
+                // lots of optimisation here
+
                 int index = SquareData.triangulations[triangulationIndex, vertIndex];
                 if (index == -1)
                     return;
