@@ -10,7 +10,6 @@ public class Chunk : MonoBehaviour
     public float surfaceValue = 0;
     [Space]
     public bool smoothed;
-    public float noiseScale = 1;
 
     [SerializeField]
     float[,] voxelMap;
@@ -23,7 +22,7 @@ public class Chunk : MonoBehaviour
     public bool drawDebug = true;
 
     public float speed = 0.2f;
-    public float offset = 1f;
+    public Vector2 offset = Vector2.zero;
     public float scale = 5f;
 
     private void Start()
@@ -40,7 +39,7 @@ public class Chunk : MonoBehaviour
 
     private void Update()
     {
-        noiseScale = (Mathf.Sin(Time.time * speed) - offset) * scale;
+        //noiseScale = (Mathf.Sin(Time.time * speed) - offset) * scale;
 
         GenerateVoxelMap();
         ClearMesh();
@@ -101,7 +100,7 @@ public class Chunk : MonoBehaviour
                     float ia = voxelMap[a.x, a.y];
                     float ib = voxelMap[b.x, b.y];
 
-                    float c = Mathf.InverseLerp(ia, ib, 0); 
+                    float c = Mathf.InverseLerp(ia, ib, surfaceValue); 
 
                     verts.Add(Vector2.Lerp(a, b, c));
                 }
@@ -136,10 +135,25 @@ public class Chunk : MonoBehaviour
         {
             for (int y = 0; y < chunkSize.y; y++)
             {
-                voxelMap[x, y] = Mathf.PerlinNoise(0.2f + (float)x / chunkSize.x * noiseScale, 0.4f + (float)y / chunkSize.y * noiseScale) - 0.5f;
-                //Debug.Log(voxelMap[x, y]);
+                //voxelMap[x, y] = Mathf.PerlinNoise(0.2f + (float)x / chunkSize.x * noiseScale, 0.4f + (float)y / chunkSize.y * noiseScale) - 0.5f;
+
+                voxelMap[x, y] = Perlin3D(x / scale + offset.x, y / scale + offset.y, Time.time * speed) - 0.5f;
             }
         }
+    }
+
+    float Perlin3D(float x, float y, float z)
+    {
+        float xy = Mathf.PerlinNoise(x, y);
+        float yz = Mathf.PerlinNoise(y, z);
+        float zx = Mathf.PerlinNoise(z, x);
+
+        float xz = Mathf.PerlinNoise(x, z);
+        float zy = Mathf.PerlinNoise(z, y);
+        float yx = Mathf.PerlinNoise(y, x);
+
+        float xyz = xy + yz + zx + xz + zy + yx;
+        return xyz / 6f;
     }
 
     private void OnDrawGizmos()
