@@ -21,7 +21,7 @@ public static class SquareData {
         new Vector2(0.5f, 0)
     };
 
-    public static readonly int[,] triangulations = new int[16, 12]
+    /*public static readonly int[,] triangulations = new int[16, 12]
     {
         {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
         {0, 1, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1},
@@ -39,7 +39,7 @@ public static class SquareData {
         { },
         { },
         { }
-    };
+    };*/
 
 }
 
