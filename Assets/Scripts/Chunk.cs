@@ -57,6 +57,24 @@ public class Chunk : MonoBehaviour
                 }
             }
         }
+        else if (Input.GetButton("Fire2"))
+        {
+
+            for (int x = 0; x < chunkSize.x; x++)
+            {
+                for (int y = 0; y < chunkSize.y; y++)
+                {
+                    float dist = Vector2.Distance(new Vector2(x, y), mousePos);
+                    if (dist <= 5 && voxelMap[x, y] < 2 - dist)
+                    {
+                        voxelMap[x, y] = -2 - dist;
+                        // make brush smoother
+                    }
+                }
+            }
+        }
+
+        Debug.Log(voxelMap[(int)mousePos.x, (int)mousePos.y]);
 
         //GenerateVoxelMap();
         ClearMesh();
@@ -86,7 +104,6 @@ public class Chunk : MonoBehaviour
             if (voxelMap[x + xOffset, y + yOffset] >= surfaceValue)
                 triangulationIndex |= 1 << i;   
         }
-        //Debug.Log("X:" + x + " Y:" + y + " Triang:" + triangulationIndex + " Surf:" + voxelMap[x, y]);
 
         if (triangulationIndex == 0)
             return;
@@ -150,15 +167,29 @@ public class Chunk : MonoBehaviour
     {
         voxelMap = new float[chunkSize.x, chunkSize.y];
 
+        float min = surfaceValue;
+        float max = surfaceValue;
+
         for (int x = 0; x < chunkSize.x; x++)
         {
             for (int y = 0; y < chunkSize.y; y++)
             {
                 //voxelMap[x, y] = Mathf.PerlinNoise(0.2f + (float)x / chunkSize.x * noiseScale, 0.4f + (float)y / chunkSize.y * noiseScale) - 0.5f;
 
-                voxelMap[x, y] = Perlin3D(x / scale + offset.x, y / scale + offset.y, Time.time * speed) - 0.5f;
+                voxelMap[x, y] = (Perlin3D(x / scale + offset.x, y / scale + offset.y, Time.time * speed) - 0.5f) * 10;
+                if (voxelMap[x, y] < -0.5f)
+                    voxelMap[x, y] = -0.5f;
+                else if (voxelMap[x, y] > 0.5f)
+                    voxelMap[x, y] = 0.5f;
+
+                if (voxelMap[x, y] < min)
+                    min = voxelMap[x, y];
+                if (voxelMap[x, y] > max)
+                    max = voxelMap[x, y];
             }
         }
+
+        Debug.Log("Min: " + min + " Max: " + max);
     }
 
     float Perlin3D(float x, float y, float z)
