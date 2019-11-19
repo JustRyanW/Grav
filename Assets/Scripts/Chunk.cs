@@ -13,6 +13,7 @@ public class Chunk : MonoBehaviour
 
     [SerializeField]
     float[,] voxelMap;
+    Vector2[,,] edgeMap;
     public List<Vector3> verts = new List<Vector3>();
     public List<int> indices = new List<int>();
 
@@ -69,7 +70,7 @@ public class Chunk : MonoBehaviour
             if (voxelMap[x + xOffset, y + yOffset] >= surfaceValue)
                 triangulationIndex |= 1 << i;   
         }
-        //Debug.Log("X:" + x + " Y:" + y + " Triang:" + triangulationIndex + " Surf:" + voxelMap[x, y]);
+        // Debug.Log("X:" + x + " Y:" + y + " Triang:" + triangulationIndex + " Surf:" + voxelMap[x, y]);
 
         if (triangulationIndex == 0)
             return;
@@ -85,15 +86,13 @@ public class Chunk : MonoBehaviour
 
                 Vector2Int pos = new Vector2Int(x, y);
 
-                if (index % 2 == 0)
+                if (index < 4)
                 {
-                    index = index / 2;
-
                     verts.Add((Vector2)pos + SquareData.vertices[index]);
                 }
                 else
                 {
-                    index = (index - 1) / 2;
+                    index = index - 4;
                     Vector2Int a = pos + SquareData.edges[index, 0];
                     Vector2Int b = pos + SquareData.edges[index, 1];
 
