@@ -8,14 +8,12 @@ public class Chunk : MonoBehaviour
 {
     public Vector2Int chunkSize = new Vector2Int(16, 16);
     public float surfaceValue = 0;
-    [Space]
-    public bool smoothed;
 
     [SerializeField]
     float[,] voxelMap;
     Vector2[,,] edgeMap;
-    public List<Vector3> verts = new List<Vector3>();
-    public List<int> indices = new List<int>();
+    List<Vector3> verts = new List<Vector3>();
+    List<int> indices = new List<int>();
 
     Mesh mesh;
     MeshFilter meshFilter;
