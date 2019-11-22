@@ -12,9 +12,12 @@ public class Chunk : MonoBehaviour
     public bool smoothed;
 
     [Header("Noise")]
+    public bool regenerateTerrain = false;
+    public bool randomizeSeed = true;
     public int seed = 0;
     public float scale = 5f;
     public Vector2 offset = Vector2.zero;
+    public bool regenerateTerrainConstant = false;
 
     [Header("Brush")]
     public float brushSize = 5f;
@@ -38,10 +41,7 @@ public class Chunk : MonoBehaviour
         mesh = new Mesh();
         meshFilter.mesh = mesh;
 
-        if (seed == 0)
-            seed = Random.Range(0, 100000);
-
-        GenerateVoxelMap();
+        GenerateNoiseMap();
         ClearMesh();
         MarchSquares();
         CreateMesh();
@@ -51,8 +51,12 @@ public class Chunk : MonoBehaviour
 
     private void Update()
     {
+        if (regenerateTerrainConstant) {
+            GenerateNoiseMap();
+            UpdateMesh();
+        }
 
-        Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition) - transform.position;
 
         if (Input.GetButton("Fire1"))
         {
@@ -62,8 +66,6 @@ public class Chunk : MonoBehaviour
         {
             DrawBrush(false, mousePos, brushSize);
         }
-
-        // Debug.Log(voxelMap[(int)mousePos.x, (int)mousePos.y]);
     }
 
     void DrawBrush(bool addTerrain, Vector2 pos, float brushSize)
@@ -200,17 +202,18 @@ public class Chunk : MonoBehaviour
         mesh.RecalculateNormals();
     }
 
-    void GenerateVoxelMap()
+    void GenerateNoiseMap()
     {
+        if (randomizeSeed)
+            seed = Random.Range(0, 100000);
+
         voxelMap = new float[chunkSize.x + 1, chunkSize.y + 1];
 
         for (int x = 0; x <= chunkSize.x; x++)
         {
             for (int y = 0; y <= chunkSize.y; y++)
-            {
-                // voxelMap[x, y] = Mathf.PerlinNoise(0.2f + (float)x / chunkSize.x * noiseScale, 0.4f + (float)y / chunkSize.y * noiseScale) - 0.5f;
-
-                voxelMap[x, y] = (Perlin3D(x / scale + offset.x, y / scale + offset.y, seed) - 0.5f) * 10;
+            {   
+                voxelMap[x, y] = (Perlin3D((x + transform.position.x) / scale, (y + transform.position.y) / scale, seed) - 0.5f) * 10;
                 if (voxelMap[x, y] < -0.5f)
                     voxelMap[x, y] = -0.5f;
                 else if (voxelMap[x, y] > 0.5f)
@@ -248,10 +251,7 @@ public class Chunk : MonoBehaviour
                 for (int y = 0; y <= chunkSize.y; y++)
                 {
                     Gizmos.color = Color.Lerp(Color.red, Color.green, Mathf.InverseLerp(-0.5f, 0.5f, voxelMap[x, y]));
-                    Gizmos.DrawCube(new Vector2(x, y), Vector3.one * 0.2f);
-
-                    // if (voxelMap[x, y] >= surfaceValue)
-                    //     Gizmos.DrawSphere(new Vector2(x, y), 0.1f);
+                    Gizmos.DrawCube(new Vector2(x, y) + (Vector2)transform.position, Vector3.one * 0.2f);
                 }
             }
         }
@@ -260,6 +260,13 @@ public class Chunk : MonoBehaviour
     private void OnValidate()
     {
         if (initialized)
+        {
+            if (regenerateTerrain)
+            {
+                GenerateNoiseMap();
+                //regenerateTerrain = false;
+            }
             UpdateMesh();
+        }
     }
 }
