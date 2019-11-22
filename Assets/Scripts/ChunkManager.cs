@@ -19,7 +19,15 @@ public class ChunkManager : MonoBehaviour
 
     void Update()
     {
-        Vector2Int coord = Vec2Floor(Camera.main.transform.position / (Vector2)chunkSize);
+		Transform cam = Camera.main.transform;
+
+		Vector2 input = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
+		if (input != Vector2.zero)
+			cam.position += (Vector3)input;
+
+
+
+        Vector2Int coord = Vec2Floor(cam.position / (Vector2)chunkSize);
         GenerateChunks(coord, renderDistance);
         CleanupChunks(coord, renderDistance);
     }
