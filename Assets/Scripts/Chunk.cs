@@ -2,28 +2,35 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof (MeshFilter))]
+[RequireComponent(typeof(MeshFilter))]
 [RequireComponent(typeof(MeshRenderer))]
 public class Chunk : MonoBehaviour
 {
+    [Header("Settings")]
     public Vector2Int chunkSize = new Vector2Int(16, 16);
     public float surfaceValue = 0;
-    [Space]
     public bool smoothed;
 
-    [SerializeField]
+    [Header("Noise")]
+    public int seed = 0;
+    public float scale = 5f;
+    public Vector2 offset = Vector2.zero;
+
+    [Header("Brush")]
+    public float brushSize = 5f;
+
+    [Header("Debug")]
+    public bool drawDebug = true;
+
+    [Header("Private")]
     float[,] voxelMap;
-    public List<Vector3> verts = new List<Vector3>();
-    public List<int> indices = new List<int>();
+    List<Vector3> verts = new List<Vector3>();
+    List<int> indices = new List<int>();
 
     Mesh mesh;
     MeshFilter meshFilter;
 
-    public bool drawDebug = true;
-
-    public float speed = 0.2f;
-    public Vector2 offset = Vector2.zero;
-    public float scale = 5f;
+    bool initialized = false;
 
     private void Start()
     {
@@ -31,52 +38,69 @@ public class Chunk : MonoBehaviour
         mesh = new Mesh();
         meshFilter.mesh = mesh;
 
+        if (seed == 0)
+            seed = Random.Range(0, 100000);
+
         GenerateVoxelMap();
         ClearMesh();
         MarchSquares();
         CreateMesh();
+
+        initialized = true;
     }
 
     private void Update()
     {
 
         Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+
         if (Input.GetButton("Fire1"))
         {
-            
-            for (int x = 0; x < chunkSize.x; x++)
-            {
-                for (int y = 0; y < chunkSize.y; y++)
-                {
-                    float dist = Vector2.Distance(new Vector2(x, y), mousePos);
-                    if (dist <= 5 && voxelMap[x, y] < 2 - dist)
-                    {
-                        voxelMap[x, y] = 2 - dist;
-                        // make brush smoother
-                    }
-                }
-            }
+            DrawBrush(true, mousePos, brushSize);
         }
         else if (Input.GetButton("Fire2"))
         {
+            DrawBrush(false, mousePos, brushSize);
+        }
 
-            for (int x = 0; x < chunkSize.x; x++)
+        // Debug.Log(voxelMap[(int)mousePos.x, (int)mousePos.y]);
+    }
+
+    void DrawBrush(bool addTerrain, Vector2 pos, float brushSize)
+    {
+        Vector2Int minMaxX = new Vector2Int((int)(pos.x - brushSize), (int)(pos.x + brushSize));
+        Vector2Int minMaxY = new Vector2Int((int)(pos.y - brushSize), (int)(pos.y + brushSize));
+        Vec2IntClamp(ref minMaxX, 0, chunkSize.x + 1);
+        Vec2IntClamp(ref minMaxY, 0, chunkSize.y + 1);
+
+        for (int x = minMaxX.x; x < minMaxX.y; x++)
+        {
+            for (int y = minMaxY.x; y < minMaxY.y; y++)
             {
-                for (int y = 0; y < chunkSize.y; y++)
+                float halfBrushSize = brushSize / 2;
+                float dist = Vector2.Distance(new Vector2(x, y), pos);
+                if (addTerrain)
                 {
-                    float dist = Vector2.Distance(new Vector2(x, y), mousePos);
-                    if (dist <= 5 && voxelMap[x, y] < 2 - dist)
+                    if (dist <= brushSize && voxelMap[x, y] < halfBrushSize - dist)
                     {
-                        voxelMap[x, y] = -2 - dist;
-                        // make brush smoother
+                        voxelMap[x, y] = halfBrushSize - dist;
+                        UpdateMesh();
+                    }
+                }
+                else
+                {
+                    if (dist <= brushSize && voxelMap[x, y] > -halfBrushSize - dist)
+                    {
+                        voxelMap[x, y] = -halfBrushSize - dist;
+                        UpdateMesh();
                     }
                 }
             }
         }
+    }
 
-        Debug.Log(voxelMap[(int)mousePos.x, (int)mousePos.y]);
-
-        //GenerateVoxelMap();
+    void UpdateMesh()
+    {
         ClearMesh();
         MarchSquares();
         CreateMesh();
@@ -84,9 +108,9 @@ public class Chunk : MonoBehaviour
 
     void MarchSquares()
     {
-        for (int x = 0; x < chunkSize.x - 1; x++)
+        for (int x = 0; x < chunkSize.x; x++)
         {
-            for (int y = 0; y < chunkSize.y - 1; y++)
+            for (int y = 0; y < chunkSize.y; y++)
             {
                 MarchSquare(x, y);
             }
@@ -95,6 +119,7 @@ public class Chunk : MonoBehaviour
 
     void MarchSquare(int x, int y)
     {
+        // Finds the triangle index of the current cube from each of its corners
         int triangulationIndex = 0;
         for (int i = 0; i < 4; i++)
         {
@@ -102,48 +127,60 @@ public class Chunk : MonoBehaviour
             int yOffset = SquareData.vertices[i].y;
 
             if (voxelMap[x + xOffset, y + yOffset] >= surfaceValue)
-                triangulationIndex |= 1 << i;   
+                triangulationIndex |= 1 << i;
         }
 
+        // Returns if the square is empty
         if (triangulationIndex == 0)
             return;
 
+        // Loops through each tri in a cube
         int vertIndex = 0;
         for (int tri = 0; tri < 4; tri++)
         {
+            // Loops thorugh each vert in a tri
             for (int vert = 0; vert < 3; vert++)
             {
                 // lots of optimisation here
 
+                // Gets the index of the current vertex
                 int index = SquareData.triangulations[triangulationIndex, vertIndex];
                 if (index == -1)
                     return;
 
                 Vector2Int pos = new Vector2Int(x, y);
 
+                // Checks if the vert is a corner or an endge
                 if (index % 2 == 0)
                 {
+                    // Add corner vert
                     index = index / 2;
-
                     verts.Add((Vector2)pos + SquareData.vertices[index]);
                 }
                 else
                 {
+                    // Get corners to lerp between
                     index = (index - 1) / 2;
                     Vector2Int a = pos + SquareData.edges[index, 0];
                     Vector2Int b = pos + SquareData.edges[index, 1];
 
-                    float ia = voxelMap[a.x, a.y];
-                    float ib = voxelMap[b.x, b.y];
+                    float surface;
+                    if (smoothed)
+                    {
+                        // Lerps between corners relitve to their value
+                        float ia = voxelMap[a.x, a.y];
+                        float ib = voxelMap[b.x, b.y];
+                        surface = Mathf.InverseLerp(ia, ib, surfaceValue);
+                    }
+                    else
+                    {
+                        // Lerp halfway
+                        surface = 0.5f;
+                    }
 
-                    float c = Mathf.InverseLerp(ia, ib, surfaceValue); 
-
-                    verts.Add(Vector2.Lerp(a, b, c));
+                    verts.Add(Vector2.Lerp(a, b, surface));
                 }
-                   
-
                 indices.Add(verts.Count - 1);
-
                 vertIndex++;
             }
         }
@@ -165,31 +202,21 @@ public class Chunk : MonoBehaviour
 
     void GenerateVoxelMap()
     {
-        voxelMap = new float[chunkSize.x, chunkSize.y];
+        voxelMap = new float[chunkSize.x + 1, chunkSize.y + 1];
 
-        float min = surfaceValue;
-        float max = surfaceValue;
-
-        for (int x = 0; x < chunkSize.x; x++)
+        for (int x = 0; x <= chunkSize.x; x++)
         {
-            for (int y = 0; y < chunkSize.y; y++)
+            for (int y = 0; y <= chunkSize.y; y++)
             {
-                //voxelMap[x, y] = Mathf.PerlinNoise(0.2f + (float)x / chunkSize.x * noiseScale, 0.4f + (float)y / chunkSize.y * noiseScale) - 0.5f;
+                // voxelMap[x, y] = Mathf.PerlinNoise(0.2f + (float)x / chunkSize.x * noiseScale, 0.4f + (float)y / chunkSize.y * noiseScale) - 0.5f;
 
-                voxelMap[x, y] = (Perlin3D(x / scale + offset.x, y / scale + offset.y, Time.time * speed) - 0.5f) * 10;
+                voxelMap[x, y] = (Perlin3D(x / scale + offset.x, y / scale + offset.y, seed) - 0.5f) * 10;
                 if (voxelMap[x, y] < -0.5f)
                     voxelMap[x, y] = -0.5f;
                 else if (voxelMap[x, y] > 0.5f)
                     voxelMap[x, y] = 0.5f;
-
-                if (voxelMap[x, y] < min)
-                    min = voxelMap[x, y];
-                if (voxelMap[x, y] > max)
-                    max = voxelMap[x, y];
             }
         }
-
-        Debug.Log("Min: " + min + " Max: " + max);
     }
 
     float Perlin3D(float x, float y, float z)
@@ -206,18 +233,33 @@ public class Chunk : MonoBehaviour
         return xyz / 6f;
     }
 
+    void Vec2IntClamp(ref Vector2Int vector, int min, int max)
+    {
+        vector.x = (int)Mathf.Clamp(vector.x, min, max);
+        vector.y = (int)Mathf.Clamp(vector.y, min, max);
+    }
+
     private void OnDrawGizmos()
     {
         if (drawDebug && Application.isPlaying)
         {
-            for (int x = 0; x < chunkSize.x; x++)
+            for (int x = 0; x <= chunkSize.x; x++)
             {
-                for (int y = 0; y < chunkSize.y; y++)
+                for (int y = 0; y <= chunkSize.y; y++)
                 {
-                    if (voxelMap[x, y] >= surfaceValue)
-                        Gizmos.DrawSphere(new Vector2(x, y), 0.1f);
+                    Gizmos.color = Color.Lerp(Color.red, Color.green, Mathf.InverseLerp(-0.5f, 0.5f, voxelMap[x, y]));
+                    Gizmos.DrawCube(new Vector2(x, y), Vector3.one * 0.2f);
+
+                    // if (voxelMap[x, y] >= surfaceValue)
+                    //     Gizmos.DrawSphere(new Vector2(x, y), 0.1f);
                 }
             }
         }
+    }
+
+    private void OnValidate()
+    {
+        if (initialized)
+            UpdateMesh();
     }
 }
