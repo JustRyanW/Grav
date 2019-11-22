@@ -89,9 +89,9 @@ public class Chunk : MonoBehaviour
                 }
                 else
                 {
-                    if (dist <= brushSize && voxelMap[x, y] > -halfBrushSize - dist)
+                    if (dist <= brushSize && voxelMap[x, y] > -halfBrushSize + dist)
                     {
-                        voxelMap[x, y] = -halfBrushSize - dist;
+                        voxelMap[x, y] = -halfBrushSize + dist;
                         UpdateMesh();
                     }
                 }
