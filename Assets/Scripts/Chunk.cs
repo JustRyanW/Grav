@@ -7,23 +7,23 @@ using UnityEngine;
 public class Chunk : MonoBehaviour
 {
     [Header("Settings")]
-    public Vector2Int chunkSize = new Vector2Int(16, 16);
+    public Vector2Int chunkSize = new Vector2Int(32, 32);
+    public Vector2Int coord;
     public float surfaceValue = 0;
-    public bool smoothed;
+    public bool smoothed = true;
 
     [Header("Noise")]
     public bool regenerateTerrain = false;
-    public bool randomizeSeed = true;
+    public bool randomizeSeed = false;
     public int seed = 0;
-    public float scale = 5f;
-    public Vector2 offset = Vector2.zero;
+    public float scale = 20f;
     public bool regenerateTerrainConstant = false;
 
     [Header("Brush")]
     public float brushSize = 5f;
 
     [Header("Debug")]
-    public bool drawDebug = true;
+    public bool drawDebug = false;
 
     [Header("Private")]
     float[,] voxelMap;
