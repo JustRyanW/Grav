@@ -107,7 +107,7 @@ public class ChunkManager : MonoBehaviour
 
         chunk.drawDebug = drawDebug;
 
-		chunk.regenerateTerrain = true;
+        chunk.regenerateTerrain = true;
     }
 
     Vector2Int Vec2Floor(Vector2 i)
@@ -119,10 +119,56 @@ public class ChunkManager : MonoBehaviour
     {
         if (Application.isPlaying)
         {
-			foreach (Chunk chunk in chunks)
-			{
-				SetChunk(chunk);
-			}
+            foreach (Chunk chunk in chunks)
+            {
+                SetChunk(chunk);
+            }
+        }
+    }
+
+
+    public Vector2 Gravity(Vector2 position, float mass)
+    {
+        Vector2 averageAttraction = Vector2.zero;
+        foreach (Chunk chunk in chunks)
+        {
+            for (int x = 0; x < chunkSize.x; x++)
+            {
+                for (int y = 0; y < chunkSize.y; y++)
+                {
+                    Vector2 attractorPos = (Vector2)chunk.transform.position + new Vector2(x, y);
+                    if (chunk.voxelMap[x, y] > 0)
+                    {
+                        Vector2 relativePosition = attractorPos - position;
+                        float attractionForce = (chunk.voxelMap[x, y] * mass) / Mathf.Pow(relativePosition.magnitude, 2);
+                        averageAttraction += attractionForce * relativePosition.normalized;
+                    }
+                }
+            }
+        }
+        return averageAttraction;
+    }
+
+    public void Trajectory(Rigidbody2D rigidbody2D, Vector2 origin, Vector2 velcoity, ref LineRenderer lineRenderer, int segmentCount)
+    {
+        lineRenderer.SetPosition(0, origin);
+        float deltaTime = Time.fixedDeltaTime;
+        for (int i = 1; i < segmentCount; i++)
+        {
+            Vector2 lastPosition = lineRenderer.GetPosition(i - 1);
+            velcoity += Gravity(lastPosition, rigidbody2D.mass) * deltaTime;
+            RaycastHit2D hit = Physics2D.Raycast(lastPosition, velcoity * deltaTime, velcoity.magnitude * deltaTime);
+            if (hit.collider != null && hit.rigidbody != rigidbody2D)
+            {
+                if (i > 5)
+                {
+                    lineRenderer.enabled = true;
+                    segmentCount = i;
+                }
+                else lineRenderer.enabled = false;
+            }
+            lineRenderer.SetPosition(i, lastPosition + velcoity * Time.fixedDeltaTime);
+            lineRenderer.positionCount = segmentCount;
         }
     }
 }

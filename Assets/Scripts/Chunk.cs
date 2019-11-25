@@ -24,7 +24,7 @@ public class Chunk : MonoBehaviour
     public bool drawDebug = false;
 
     [Header("Private")]
-    float[,] voxelMap;
+    public float[,] voxelMap;
     List<Vector3> verts = new List<Vector3>();
     List<int> indices = new List<int>();
 
@@ -33,13 +33,16 @@ public class Chunk : MonoBehaviour
 
     bool initialized = false;
 
+    GameObject player;
+
     private void Start()
     {
         meshFilter = GetComponent<MeshFilter>();
         mesh = new Mesh();
         meshFilter.mesh = mesh;
+        player = GameObject.Find("Sphere");
 
-        GenerateNoiseMap();
+        GenerateMap();
         ClearMesh();
         MarchSquares();
         CreateMesh();
@@ -50,15 +53,17 @@ public class Chunk : MonoBehaviour
     private void Update()
     {
         Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition) - transform.position;
-
-        if (Input.GetButton("Fire1"))
+        DrawBrush(false, player.transform.position - transform.position, 5);
+        
+        if (Input.GetButton("Fire2"))
         {
             DrawBrush(true, mousePos, brushSize);
         }
-        else if (Input.GetButton("Fire2"))
+        else if (Input.GetButton("Fire3"))
         {
             DrawBrush(false, mousePos, brushSize);
         }
+        
     }
 
     void DrawBrush(bool addTerrain, Vector2 pos, float brushSize)
@@ -183,7 +188,8 @@ public class Chunk : MonoBehaviour
         }
     }
 
-    int VertForIndice (Vector3 vert) {
+    int VertForIndice(Vector3 vert)
+    {
         // Loop through all the vertices
         for (int i = 0; i < verts.Count; i++)
         {
@@ -196,7 +202,7 @@ public class Chunk : MonoBehaviour
         verts.Add(vert);
         return verts.Count - 1;
     }
- 
+
     void ClearMesh()
     {
         mesh.Clear();
@@ -221,7 +227,7 @@ public class Chunk : MonoBehaviour
         for (int x = 0; x <= chunkSize.x; x++)
         {
             for (int y = 0; y <= chunkSize.y; y++)
-            {   
+            {
                 voxelMap[x, y] = (Perlin3D((x + transform.position.x) / scale, (y + transform.position.y) / scale, seed) - 0.5f) * 10;
                 if (voxelMap[x, y] < -0.5f)
                     voxelMap[x, y] = -0.5f;
@@ -229,6 +235,17 @@ public class Chunk : MonoBehaviour
                     voxelMap[x, y] = 0.5f;
             }
         }
+    }
+
+    void GenerateMap()
+    {
+        voxelMap = new float[chunkSize.x + 1, chunkSize.y + 1];
+        for (int x = 0; x <= chunkSize.x; x++)
+            for (int y = 0; y <= chunkSize.y; y++)
+                voxelMap[x, y] = -0.5f;
+
+
+        DrawBrush(true, new Vector2(0, 0) - (Vector2)transform.position, 20);
     }
 
     float Perlin3D(float x, float y, float z)
@@ -272,7 +289,7 @@ public class Chunk : MonoBehaviour
         {
             if (regenerateTerrain)
             {
-                GenerateNoiseMap();
+                GenerateMap();
                 regenerateTerrain = false;
             }
             UpdateMesh();

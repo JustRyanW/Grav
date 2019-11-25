@@ -5,6 +5,7 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody2D))]
 public class Player : MonoBehaviour {
 
+    public ChunkManager chunkManager;
     Rigidbody2D thisRigidbody2D;
     LineRenderer lineRenderer;
 
@@ -46,12 +47,13 @@ public class Player : MonoBehaviour {
     {
         if (aiming)
         {
-            Calculations.Trajectory(thisRigidbody2D ,transform.position, startForce, ref lineRenderer, trajectorySegmentCount);
+            chunkManager.Trajectory(thisRigidbody2D ,transform.position, startForce, ref lineRenderer, trajectorySegmentCount);
         }
         else if (falling)
         {
-            thisRigidbody2D.AddForce(Calculations.Gravity(transform.position, thisRigidbody2D.mass) * thisRigidbody2D.mass);
-            Calculations.Trajectory(thisRigidbody2D ,transform.position, thisRigidbody2D.velocity, ref lineRenderer, trajectorySegmentCount);         
+            thisRigidbody2D.AddForce(chunkManager.Gravity(transform.position, thisRigidbody2D.mass) * thisRigidbody2D.mass);
+            //chunkManager.Trajectory(thisRigidbody2D ,transform.position, thisRigidbody2D.velocity, ref lineRenderer, trajectorySegmentCount); 
+            lineRenderer.enabled = false;   
         }
     }
 
