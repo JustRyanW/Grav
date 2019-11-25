@@ -6,7 +6,6 @@ using UnityEngine;
 [RequireComponent(typeof(MeshRenderer))]
 public class Chunk : MonoBehaviour
 {
-    [Header("Settings")]
     public Vector2Int chunkSize = new Vector2Int(32, 32);
     public Vector2Int coord;
     public float surfaceValue = 0;
@@ -17,7 +16,6 @@ public class Chunk : MonoBehaviour
     public bool randomizeSeed = false;
     public int seed = 0;
     public float scale = 20f;
-    public bool regenerateTerrainConstant = false;
 
     [Header("Brush")]
     public float brushSize = 5f;
@@ -51,11 +49,6 @@ public class Chunk : MonoBehaviour
 
     private void Update()
     {
-        if (regenerateTerrainConstant) {
-            GenerateNoiseMap();
-            UpdateMesh();
-        }
-
         Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition) - transform.position;
 
         if (Input.GetButton("Fire1"))
@@ -151,13 +144,14 @@ public class Chunk : MonoBehaviour
                     return;
 
                 Vector2Int pos = new Vector2Int(x, y);
+                Vector2 vertPos;
 
                 // Checks if the vert is a corner or an endge
                 if (index % 2 == 0)
                 {
                     // Add corner vert
                     index = index / 2;
-                    verts.Add((Vector2)pos + SquareData.vertices[index]);
+                    vertPos = (Vector2)pos + SquareData.vertices[index];
                 }
                 else
                 {
@@ -180,14 +174,29 @@ public class Chunk : MonoBehaviour
                         surface = 0.5f;
                     }
 
-                    verts.Add(Vector2.Lerp(a, b, surface));
+                    vertPos = Vector2.Lerp(a, b, surface);
                 }
-                indices.Add(verts.Count - 1);
+
+                indices.Add(VertForIndice(vertPos));
                 vertIndex++;
             }
         }
     }
 
+    int VertForIndice (Vector3 vert) {
+        // Loop through all the vertices
+        for (int i = 0; i < verts.Count; i++)
+        {
+            // If a vert matches ours then return this one
+            if (verts[i] == vert)
+                return i;
+        }
+
+        // If no matches are found, add this vert to the list and return the last index;
+        verts.Add(vert);
+        return verts.Count - 1;
+    }
+ 
     void ClearMesh()
     {
         mesh.Clear();
@@ -264,7 +273,7 @@ public class Chunk : MonoBehaviour
             if (regenerateTerrain)
             {
                 GenerateNoiseMap();
-                //regenerateTerrain = false;
+                regenerateTerrain = false;
             }
             UpdateMesh();
         }

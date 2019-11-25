@@ -4,12 +4,26 @@ using UnityEngine;
 
 public class ChunkManager : MonoBehaviour
 {
-
+    [Header("Settings")]
     public Vector2Int chunkSize = new Vector2Int(16, 16);
     public int renderDistance = 2;
-
+    public float surfaceValue = 0;
+    public bool smoothed = true;
     public Material material;
 
+    [Header("Noise")]
+    public bool regenerateTerrain = false;
+    public bool randomizeSeed = false;
+    public int seed = 0;
+    public float scale = 20f;
+
+    [Header("Brush")]
+    public float brushSize = 5f;
+
+    [Header("Debug")]
+    public bool drawDebug = false;
+
+    [Header("Private")]
     List<Chunk> chunks = new List<Chunk>();
 
     void Start()
@@ -19,11 +33,11 @@ public class ChunkManager : MonoBehaviour
 
     void Update()
     {
-		Transform cam = Camera.main.transform;
+        Transform cam = Camera.main.transform;
 
-		Vector2 input = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
-		if (input != Vector2.zero)
-			cam.position += (Vector3)input;
+        Vector2 input = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
+        if (input != Vector2.zero)
+            cam.position += (Vector3)input;
 
 
 
@@ -63,28 +77,52 @@ public class ChunkManager : MonoBehaviour
             {
                 Destroy(chunk.gameObject);
                 chunks.Remove(chunk);
-				CleanupChunks(coord, rd);
-				return;
+                CleanupChunks(coord, rd);
+                return;
             }
         }
     }
 
     void CreateChunk(Vector2Int coord)
     {
-        GameObject chunk = new GameObject("Chunk");
-        chunk.transform.parent = this.transform;
-        chunk.transform.position = (Vector2)coord * chunkSize;
+        GameObject chunkObject = new GameObject("Chunk");
+        Chunk chunk = chunkObject.AddComponent<Chunk>();
+        chunk.coord = coord;
+        chunks.Add(chunk);
+        SetChunk(chunk);
+    }
 
-        Chunk chunkScript = chunk.AddComponent<Chunk>();
-        chunkScript.chunkSize = chunkSize;
-        chunkScript.coord = coord;
-        chunks.Add(chunkScript);
-
+    void SetChunk(Chunk chunk)
+    {
+        chunk.gameObject.transform.parent = this.transform;
+        chunk.gameObject.transform.position = (Vector2)chunk.coord * chunkSize;
+        chunk.chunkSize = chunkSize;
+        chunk.surfaceValue = surfaceValue;
+        chunk.smoothed = smoothed;
         chunk.GetComponent<MeshRenderer>().material = material;
+
+        chunk.scale = scale;
+
+        chunk.brushSize = brushSize;
+
+        chunk.drawDebug = drawDebug;
+
+		chunk.regenerateTerrain = true;
     }
 
     Vector2Int Vec2Floor(Vector2 i)
     {
         return new Vector2Int(Mathf.FloorToInt(i.x), Mathf.FloorToInt(i.y));
+    }
+
+    private void OnValidate()
+    {
+        if (Application.isPlaying)
+        {
+			foreach (Chunk chunk in chunks)
+			{
+				SetChunk(chunk);
+			}
+        }
     }
 }

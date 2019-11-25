@@ -50,11 +50,3 @@ public static class SquareData {
         {0, 2, 4, 0, 4, 6, -1, -1, -1, -1, -1, -1},                 //    15 = 1111
     };
 }
-
-public class Square {
-    Vector3 position;
-}
-
-public class Voxels : MonoBehaviour {
-    
-}
