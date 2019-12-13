@@ -79,7 +79,6 @@ public class Chunk : MonoBehaviour
                     if (dist <= brushSize && voxelMap[x, y] < halfBrushSize - dist)
                     {
                         voxelMap[x, y] = halfBrushSize - dist;
-                        UpdateMesh();
                     }
                 }
                 else
@@ -87,11 +86,11 @@ public class Chunk : MonoBehaviour
                     if (dist <= brushSize && voxelMap[x, y] > -halfBrushSize + dist)
                     {
                         voxelMap[x, y] = -halfBrushSize + dist;
-                        UpdateMesh();
                     }
                 }
             }
         }
+        UpdateMesh();
     }
 
     void UpdateMesh()
@@ -183,7 +182,8 @@ public class Chunk : MonoBehaviour
         }
     }
 
-    int VertForIndice (Vector3 vert) {
+    int VertForIndice(Vector3 vert)
+    {
         // Loop through all the vertices
         for (int i = 0; i < verts.Count; i++)
         {
@@ -196,7 +196,7 @@ public class Chunk : MonoBehaviour
         verts.Add(vert);
         return verts.Count - 1;
     }
- 
+
     void ClearMesh()
     {
         mesh.Clear();
@@ -221,7 +221,7 @@ public class Chunk : MonoBehaviour
         for (int x = 0; x <= chunkSize.x; x++)
         {
             for (int y = 0; y <= chunkSize.y; y++)
-            {   
+            {
                 voxelMap[x, y] = (Perlin3D((x + transform.position.x) / scale, (y + transform.position.y) / scale, seed) - 0.5f) * 10;
                 if (voxelMap[x, y] < -0.5f)
                     voxelMap[x, y] = -0.5f;
