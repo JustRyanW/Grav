@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public static class SquareData {
+public static class Marching {
 
     //  2----3----4 
     //  |         | 
