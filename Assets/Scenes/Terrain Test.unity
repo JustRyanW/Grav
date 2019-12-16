@@ -153,9 +153,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25788bfc6c45245cc9652ae24437b3db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  chunkSize: {x: 16, y: 16}
+  chunkSize: {x: 8, y: 8}
   renderDistance: 3
+  surfaceValue: 0
+  smoothed: 1
   material: {fileID: 10302, guid: 0000000000000000f000000000000000, type: 0}
+  regenerateTerrain: 0
+  randomizeSeed: 0
+  seed: 0
+  scale: 20
+  brushSize: 5
+  drawDebug: 0
 --- !u!1 &2011861002
 GameObject:
   m_ObjectHideFlags: 0

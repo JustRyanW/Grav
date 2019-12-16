@@ -49,6 +49,7 @@ public class Chunk : MonoBehaviour
 
     private void Update()
     {
+        // add a check if the brush pos plus or minus the max size is inside the chunk
         Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition) - transform.position;
 
         if (Input.GetButton("Fire1"))
@@ -276,6 +277,6 @@ public class Chunk : MonoBehaviour
                 regenerateTerrain = false;
             }
             UpdateMesh();
-        }
+            }
     }
 }

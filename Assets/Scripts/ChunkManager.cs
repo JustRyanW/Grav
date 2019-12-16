@@ -25,6 +25,7 @@ public class ChunkManager : MonoBehaviour
 
     [Header("Private")]
     List<Chunk> chunks = new List<Chunk>();
+    List<Chunk> updateQueue = new List<Chunk>();
 
     void Start()
     {
